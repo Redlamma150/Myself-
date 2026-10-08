@@ -4,9 +4,9 @@
 
 ## 0. בשורה אחת
 
-אפליקציית ווב בעברית: כרום לוכד את השיחה, Soniox מתמלל, Claude מעדכן "תיק אבחון" ב-JSON, וקוד שלנו (ולא המודל) מחשב שעות ומחיר מתוך קטלוג רכיבים. Supabase דוחף כל עדכון למסך היועץ ולמסך הלקוח. בסוף השיחה נוצרים הצעה, TRD ומוקאפ, ויש קישור למקדמה ב-PayPlus.
+אפליקציית ווב בעברית: כרום לוכד את השיחה, Soniox מתמלל, Claude מעדכן "תיק אבחון" ב-JSON, וקוד שלנו (ולא המודל) מחשב שעות ומחיר מתוך קטלוג רכיבים. Supabase דוחף כל עדכון למסך היועץ ולמסך הלקוח. בסוף השיחה נוצרים הצעה, TRD ומוקאפ, ויש קישור למקדמה דרך מערכת הסליקה שבחרתם בהגדרות (PayPlus כברירת מחדל).
 
-**שלושה שירותים בתשלום, וכולם לפי שימוש:** Soniox, Claude API ו-PayPlus. Supabase חינמי בהתחלה, ואחר כך $25 לחודש. כל השאר קוד שלנו.
+**שלושה שירותים בתשלום, וכולם לפי שימוש:** Soniox, Claude API ומערכת סליקה (PayPlus כברירת מחדל, ניתן להחלפה). Supabase חינמי בהתחלה, ואחר כך $25 לחודש. כל השאר קוד שלנו.
 
 ---
 
@@ -39,13 +39,13 @@ flowchart TB
     EF_EXTRACT["Edge: extract"]
     EF_CHECK["Edge: tool-check"]
     EF_FINAL["Edge: finalize"]
-    EF_PAY["Edge: payplus-link / payplus-webhook"]
+    EF_PAY["Edge: payment-link / payment-webhook"]
     RT["Realtime"]
     ST["Storage: הצעות, TRD, מוקאפים"]
   end
   CLAUDE["Claude API: Structured Outputs"]
   WS["Claude web search tool"]
-  PAYPLUS["PayPlus"]
+  PAYPLUS["מערכת סליקה לבחירה: PayPlus / אחרת"]
 
   CAP -->|מפתח זמני| EF_TOKEN
   CAP -->|אודיו| SONIOX -->|טקסט + דובר| CAP
@@ -71,7 +71,7 @@ flowchart TB
 | תמלול | Soniox (ראשי). Deepgram Nova-3 כגיבוי מאחורי ממשק `Transcriber` | ההחלטה ביניהם נקבעת בפיילוט |
 | מוח | Claude API עם Structured Outputs (`output_config.format`) | JSON שתמיד תואם לסכמה |
 | בדיקת API | Claude עם כלי `web_search` (`web_search_20260209`) | מוצא תיעוד ומחזיר מסקנה מובנית |
-| תשלום | PayPlus: דף תשלום עם callback | סליקה ישראלית |
+| תשלום | מתאם סליקה (`PaymentProvider`), ספק ראשון PayPlus | הספק נבחר בהגדרות. החלפה בלי לגעת בשאר הקוד |
 | שפה משותפת | חבילת `shared`: סכמות Zod, נוסחאות הערכה, `ltr()` | אותו קוד רץ בדפדפן וב-Edge Functions |
 
 ---
@@ -132,10 +132,18 @@ flowchart TB
 3. ה-HTML של ההצעה נוצר מתבנית שלנו, והמספרים מוזרקים מ-`estimates`, ולא מהטקסט של המודל. אחר כך מייצרים PDF ושומרים ב-Storage.
 4. **שער אישור אנושי:** היועץ עובר על ההצעה ומאשר שליחה. היעד הוא עשר דקות מסוף השיחה.
 5. הלקוח מקבל קישור `/p/<token>`: הצעה, TRD, מוקאפ וכפתור "מאשר/ת". הקישור נשלח בוואטסאפ או במייל מהיועץ, כך שבשלב הראשון אין צורך בשירות דיוור.
-6. אישור, ואז `payplus-link` יוצר דף תשלום עם סכום המקדמה, ומעביר את מזהה ההצעה כ-reference.
-7. `payplus-webhook` מאמת חתימה, ומאמת שוב מול API הסטטוס של PayPlus. אחר כך מסמן `payments.paid`, מעדכן את השיחה ל-`won`, ופותח משימות ב-`tasks` (לוח פנימי, בלי ClickUp).
+6. אישור, ואז `payment-link` קורא את ספק הסליקה שמוגדר לארגון, ויוצר דרכו דף תשלום עם סכום המקדמה ומזהה ההצעה כ-reference.
+7. `payment-webhook/<provider>` מאמת חתימה לפי הספק, ומאמת שוב מול API הסטטוס שלו. אחר כך מסמן `payments.paid`, מעדכן את השיחה ל-`won`, ופותח משימות ב-`tasks` (לוח פנימי, בלי ClickUp).
 
 > את פרטי ה-API של PayPlus (נקודות קצה, שיטת חתימה, עמלות) צריך לאמת מול התיעוד וההסכם שלהם לפני הפיתוח. זה ברשימת "מה עוד לא מאומת".
+
+### 3.7 בחירת מערכת סליקה
+מערכת הסליקה היא הגדרה של הארגון, ולא חלק מהקוד:
+- **מתאם אחד לכל ספק.** ממשק `PaymentProvider` עם שלוש פעולות: `createPaymentLink(amount, reference)`, `verifyWebhook(request)` ו-`getStatus(providerRef)`. כל ספק הוא קובץ אחד שמממש אותן.
+- **ספק ראשון: PayPlus.** אחר כך אפשר להוסיף ספקים כמו Grow (משולם), Cardcom, Tranzila או Stripe, כל אחד כמתאם נוסף.
+- **מסך הגדרות:** בוחרים ספק, מזינים מפתחות ולוחצים "בדוק חיבור" (יצירת קישור בסכום סמלי, או קריאת סטטוס). המפתחות נשמרים מוצפנים ב-Supabase Vault.
+- **Webhook לכל ספק** בכתובת נפרדת (`/payment-webhook/<provider>`), וכל תשלום נשמר עם הספק שדרכו בוצע. כך החלפת ספק לא שוברת תשלומים פתוחים.
+
 
 ---
 
@@ -143,7 +151,10 @@ flowchart TB
 
 ```sql
 -- ארגון ומשתמשים (מוכן לרישוי עתידי)
-organizations(id, name, hourly_rate_default numeric default 380, created_at)
+organizations(id, name, hourly_rate_default numeric default 380,
+  payment_provider text default 'payplus',   -- ניתן לשינוי במסך ההגדרות
+  payment_credentials_secret_id uuid,        -- הפניה ל-Supabase Vault
+  created_at)
 members(org_id, user_id -> auth.users, role text check (role in ('owner','consultant')))
 
 -- קטלוג: הנכס העסקי האמיתי
@@ -195,7 +206,7 @@ proposals(id, session_id, version int, status text, deposit_amount numeric,
   html_path, pdf_path, trd_path, mockup_path, public_token_hash,
   approved_by_consultant_at, sent_at, client_approved_at)
 
-payments(id, proposal_id, provider text default 'payplus', provider_ref, amount, currency default 'ILS',
+payments(id, proposal_id, provider text, provider_ref, amount, currency default 'ILS',
   status text, raw jsonb, created_at, paid_at)
 
 tasks(id, org_id, session_id, title_he, status text, assignee_id, due_date, sort int)
@@ -296,13 +307,13 @@ roi     = ((price_min + price_max) / 2) / client_monthly_value   // חודשים
 /supabase
   /migrations             SQL + RLS
   /functions              soniox-token, extract, recalc-estimate, tool-check, finalize,
-                          client-session, payplus-link, payplus-webhook
+                          client-session, payment-link, payment-webhook
   seed.sql                15 רכיבי הקטלוג הראשונים
 /evals                    הקלטות פיילוט (מקומי בלבד, לא ב-git), תיקים "נכונים", סקריפט השוואה
 /docs                     המסמך הזה, TRD, תבניות הצעה
 ```
 
-**סודות:** `ANTHROPIC_API_KEY`, `SONIOX_API_KEY`, `DEEPGRAM_API_KEY` ומפתחות PayPlus נשמרים רק ב-Supabase secrets. שום סוד לא נכנס לריפו או לקוד הפרונט.
+**סודות:** `ANTHROPIC_API_KEY`, `SONIOX_API_KEY`, `DEEPGRAM_API_KEY` נשמרים רק ב-Supabase secrets. מפתחות ספק הסליקה של כל ארגון נשמרים מוצפנים ב-Supabase Vault. שום סוד לא נכנס לריפו או לקוד הפרונט.
 
 ---
 
@@ -336,7 +347,8 @@ roi     = ((price_min + price_max) / 2) / client_monthly_value   // חודשים
 ### שלב 3: מסך לקוח וסגירה (חודשים 3–4)
 - [ ] `client_snapshots`, `client-session` ומסך לקוח.
 - [ ] `finalize`: הצעה, TRD, מוקאפ ו-PDF, עם מסך אישור ליועץ.
-- [ ] דף הצעה ללקוח, אישור, PayPlus ו-webhook.
+- [ ] דף הצעה ללקוח, אישור, תשלום ו-webhook דרך מתאם הסליקה (PayPlus ראשון).
+- [ ] מסך הגדרות: בחירת מערכת סליקה, הזנת מפתחות ובדיקת חיבור.
 - [ ] לוח משימות פנימי שנפתח אוטומטית אחרי תשלום.
 - [ ] צילום ההדגמה כתוכן שיווקי.
 - **יעד:** ₪50–70K בחודש.
@@ -349,7 +361,7 @@ roi     = ((price_min + price_max) / 2) / client_monthly_value   // חודשים
 
 ### שלב 5: רישוי LiveScope (חודש 10 והלאה)
 - [ ] הרשמה ופתיחת ארגון, קטלוג משלו לכל ארגון, ומושבים.
-- [ ] חיוב מנוי (PayPlus הוראת קבע, או ספק אחר).
+- [ ] חיוב מנוי דרך אותו מתאם סליקה.
 - [ ] מיתוג לכל ארגון בהצעה ובמסך הלקוח.
 
 ---
@@ -410,6 +422,6 @@ roi     = ((price_min + price_max) / 2) / client_monthly_value   // חודשים
 
 - דיוק התמלול בעברית על האודיו שלכם.
 - זמני התגובה של Claude בלולאה של 45 שניות.
-- עמלות PayPlus ופרטי ה-API שלהם.
+- עמלות ופרטי ה-API של ספקי הסליקה (PayPlus ומי שיתווסף).
 - מדיניות שמירת נתונים אצל ספקי התמלול וה-AI.
 - מגבלות זמן ריצה של Supabase Edge Functions לסגירה (ייתכן שיידרש תור).
