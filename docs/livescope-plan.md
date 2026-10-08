@@ -120,6 +120,7 @@ flowchart TB
 
 ### 3.5 שני המסכים
 - **מסך יועץ** (מחובר, RLS לפי ארגון): נרשם לשינויים בטבלאות השיחה (Realtime, Postgres Changes, או `realtime.broadcast_changes` מטריגר, שמתאים יותר בעומס). מציג תמלול, תרשים, תובנות, רכיבים עם שעות, הערכה ושאלות חסרות. **היועץ יכול לתקן:** להסיר רכיב, לשנות שלב (1 או 2) או לנעול טווח. תיקון ידני גובר על המודל בריצות הבאות.
+- **תעריף שעתי דינמי:** במסך היועץ יש שדה תעריף, שמתחיל מברירת המחדל של הארגון (₪380). היועץ יכול לשנות אותו בכל רגע בשיחה, וגם לקבוע תעריף שונה לרכיב מסוים (למשל רכיב שדורש מומחיות). שינוי תעריף לא מחכה לסבב של Claude: פונקציה קלה (`recalc-estimate`) מחשבת מחדש את `estimates` ואת `client_snapshots` מיד, ומסך הלקוח רואה את המחיר המעודכן. כל הערכה נשמרת עם התעריף שהיה בתוקף כשחושבה, כך שאפשר לראות בדיעבד מה הוצג ללקוח.
 - **מסך לקוח** (`/c/<token>`, בלי התחברות): פונקציית `client-session` מאמתת את הטוקן (שנשמר כ-hash) ומנפיקה JWT קצר עם claim של `session_id`. ה-RLS על `client_snapshots` מאפשר לקרוא רק את השורה הזו. התרשים מצויר ב-Mermaid מתוך הנתונים, ולא מטקסט ש-Claude כתב, כך שאין שגיאות תחביר על המסך מול הלקוח.
 
 ### 3.6 סגירה: הצעה, TRD, מוקאפ ומקדמה
@@ -177,13 +178,13 @@ insights(id, session_id, key text, kind text check (kind in ('pain','goal','mone
   headline_he, why_he, status text default 'open', evidence_seq int[], created_version int, updated_at)
 
 session_components(id, session_id, component_id, variant text default 'unknown',
-  hours_min int, hours_max int, phase int, reason_he, evidence_seq int[],
+  hours_min int, hours_max int, hourly_rate_override numeric, phase int, reason_he, evidence_seq int[],
   source text check (source in ('model','consultant')), status text check (status in ('suggested','accepted','removed')))
 
 diagram_nodes(id, session_id, key text, title_he, sub_he, sort int, created_version int)
 diagram_edges(id, session_id, from_key, to_key, label_he)
 
-estimates(id, session_id, hours_min, hours_max, price_min, price_max,
+estimates(id, session_id, hourly_rate numeric, hours_min, hours_max, price_min, price_max,
   weeks_min, weeks_max, roi_months numeric, phase_filter int, created_at)
 
 client_snapshots(session_id primary key, payload jsonb, updated_at)   -- כל מה שהלקוח רואה, ותו לא
@@ -238,7 +239,8 @@ Dossier = {
 
 ```ts
 hours   = Σ component.hours[variant]            // min ו-max בנפרד, רק status != 'removed'
-price   = hours × hourly_rate                   // ₪380 ברירת מחדל
+price   = Σ component.hours × (component.hourly_rate_override ?? session.hourly_rate)
+                                                // session.hourly_rate: ₪380 מהארגון, היועץ משנה בזמן אמת
 weeks   = ceil(hours / 22) + 1                  // לכל קצה
 roi     = ((price_min + price_max) / 2) / client_monthly_value   // חודשים; רק אם ידוע
 ```
@@ -293,7 +295,7 @@ roi     = ((price_min + price_max) / 2) / client_monthly_value   // חודשים
 /packages/shared          dossier schema (Zod), estimate.ts, ltr.ts, types
 /supabase
   /migrations             SQL + RLS
-  /functions              soniox-token, extract, tool-check, finalize,
+  /functions              soniox-token, extract, recalc-estimate, tool-check, finalize,
                           client-session, payplus-link, payplus-webhook
   seed.sql                15 רכיבי הקטלוג הראשונים
 /evals                    הקלטות פיילוט (מקומי בלבד, לא ב-git), תיקים "נכונים", סקריפט השוואה
@@ -326,6 +328,7 @@ roi     = ((price_min + price_max) / 2) / client_monthly_value   // חודשים
 - [ ] `extract` עם מיזוג, `estimates` ו-Realtime למסך היועץ.
 - [ ] `tool-check` עם מטמון `integrations`.
 - [ ] מסך יועץ: תמלול, תרשים Mermaid, תובנות, רכיבים עם עריכה, והערכה.
+- [ ] שדה תעריף שעתי דינמי (לשיחה ולרכיב) עם חישוב מחדש מיידי.
 - [ ] ניהול קטלוג.
 - [ ] מדדים: `ai_calls` ועלות לשיחה.
 - **יעד:** ₪30–45K בחודש.
