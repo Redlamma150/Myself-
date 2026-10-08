@@ -1,0 +1,153 @@
+{
+  "provider": "fixture",
+  "model": "demo-noisy (טעויות מכוונות)",
+  "audioFile": null,
+  "durationMs": 208000,
+  "processingMs": null,
+  "segments": [
+    {
+      "seq": 1,
+      "rawSpeaker": "0",
+      "speaker": "consultant",
+      "text": "ספרי לי, איך ליד חדש מגיע אלייך היום?",
+      "startMs": 500,
+      "endMs": 10500
+    },
+    {
+      "seq": 2,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "בעיקר ממודעות באינסטגרם. הם ממלאים טופס, ואז אני או המזכירה מתקשרות.",
+      "startMs": 12000,
+      "endMs": 25000
+    },
+    {
+      "seq": 3,
+      "rawSpeaker": "0",
+      "speaker": "consultant",
+      "text": "כמה לידים בחודש, בערך?",
+      "startMs": 26500,
+      "endMs": 34500
+    },
+    {
+      "seq": 4,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "בערך 200. אבל חצי מהם אנחנו לא מספיקות לחזור אליהם באותו יום.",
+      "startMs": 36000,
+      "endMs": 48000
+    },
+    {
+      "seq": 5,
+      "rawSpeaker": "0",
+      "speaker": "consultant",
+      "text": "ומה קורה עם אלה שלא חוזרים אליהם?",
+      "startMs": 49500,
+      "endMs": 58500
+    },
+    {
+      "seq": 6,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "הרבה פשוט נעלמים. עד שאני מתקשרת הם כבר נרשמו למקום אחר.",
+      "startMs": 60000,
+      "endMs": 72000
+    },
+    {
+      "seq": 7,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "ואנשים כותבים בווטסאפ בשעות מטורפות, אחת בלילה.",
+      "startMs": 73500,
+      "endMs": 83500
+    },
+    {
+      "seq": 8,
+      "rawSpeaker": "0",
+      "speaker": "consultant",
+      "text": "מי עונה להם?",
+      "startMs": 85000,
+      "endMs": 92000
+    },
+    {
+      "seq": 9,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "אף אחד, עד הבוקר. ואז זה נערם.",
+      "startMs": 93500,
+      "endMs": 102500
+    },
+    {
+      "seq": 10,
+      "rawSpeaker": "0",
+      "speaker": "consultant",
+      "text": "מה קורה אחרי שמישהו נקבע לשיעור ניסיון?",
+      "startMs": 104000,
+      "endMs": 113000
+    },
+    {
+      "seq": 11,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "חלק לא מגיעים. אין תזכורות, ואין לי מושג מה אחוז ההמרה בכל סניף.",
+      "startMs": 114500,
+      "endMs": 127500
+    },
+    {
+      "seq": 12,
+      "rawSpeaker": "0",
+      "speaker": "client",
+      "text": "כמה סניפים יש לך?",
+      "startMs": 129000,
+      "endMs": 136000
+    },
+    {
+      "seq": 13,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "שלושה סניפים, בתל אביב, ברמת גן ובהרצליה.",
+      "startMs": 137500,
+      "endMs": 146500
+    },
+    {
+      "seq": 14,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "יש לנו סטודיו פלואו לניהול המנויים, אבל אני לא בטוחה שאפשר לחבר אליה משהו.",
+      "startMs": 148000,
+      "endMs": 161000
+    },
+    {
+      "seq": 15,
+      "rawSpeaker": "0",
+      "speaker": "consultant",
+      "text": "ואם כל זה היה עובד, מה זה שווה לך?",
+      "startMs": 162500,
+      "endMs": 171500
+    },
+    {
+      "seq": 16,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "אם עוד עשרה אנשים נרשמים בחודש, זה בערך ארבעת אלפים שקל כל חודש.",
+      "startMs": 173000,
+      "endMs": 185000
+    },
+    {
+      "seq": 17,
+      "rawSpeaker": "0",
+      "speaker": "consultant",
+      "text": "ומה התקציב שחשבת עליו?",
+      "startMs": 186500,
+      "endMs": 194500
+    },
+    {
+      "seq": 18,
+      "rawSpeaker": "1",
+      "speaker": "client",
+      "text": "לא חשבתי על מספר. אבל אם זה מחזיר את עצמו תוך שנה, זה הגיוני.",
+      "startMs": 196000,
+      "endMs": 208000
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "livescope-poc",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "transcribe": "tsx src/cli/transcribe.ts",
+    "compare": "tsx src/cli/compare-transcripts.ts",
+    "simulate": "tsx src/cli/simulate-live.ts",
+    "score": "tsx src/cli/score-dossier.ts",
+    "estimate": "tsx src/cli/estimate.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

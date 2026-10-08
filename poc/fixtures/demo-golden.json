@@ -1,0 +1,174 @@
+{
+  "business": {
+    "type_he": "רשת סטודיו פילאטיס",
+    "branches": 3,
+    "summary_he": "שלושה סניפים, לידים ממודעות אינסטגרם, מנויים ב-StudioFlow"
+  },
+  "pains": [
+    {
+      "key": "slow_followup",
+      "text_he": "חצי מהלידים, כ-150 בחודש, לא מקבלים חזרה באותו יום והולכים למתחרים",
+      "severity": "high",
+      "quantified_value": 150,
+      "quantified_unit_he": "לידים בחודש",
+      "evidence_seq": [
+        4,
+        6
+      ],
+      "status": "open"
+    },
+    {
+      "key": "night_whatsapp",
+      "text_he": "פניות בוואטסאפ בלילה נשארות בלי מענה עד הבוקר",
+      "severity": "med",
+      "quantified_value": null,
+      "quantified_unit_he": null,
+      "evidence_seq": [
+        7,
+        9
+      ],
+      "status": "open"
+    },
+    {
+      "key": "no_shows",
+      "text_he": "אנשים לא מגיעים לשיעור ניסיון, אין תזכורות",
+      "severity": "med",
+      "quantified_value": null,
+      "quantified_unit_he": null,
+      "evidence_seq": [
+        11
+      ],
+      "status": "open"
+    },
+    {
+      "key": "no_branch_visibility",
+      "text_he": "אין לה מושג מה אחוז ההמרה בכל סניף",
+      "severity": "med",
+      "quantified_value": null,
+      "quantified_unit_he": null,
+      "evidence_seq": [
+        11
+      ],
+      "status": "open"
+    }
+  ],
+  "goals": [
+    {
+      "key": "answer_24_7",
+      "text_he": "שמישהו יענה לפניות גם בלילה, בלי להעסיק עוד עובדת",
+      "evidence_seq": [
+        7,
+        9
+      ]
+    },
+    {
+      "key": "more_signups",
+      "text_he": "עוד כעשרה נרשמים בחודש",
+      "evidence_seq": [
+        16
+      ]
+    },
+    {
+      "key": "payback_year",
+      "text_he": "שהפרויקט יחזיר את עצמו תוך שנה",
+      "evidence_seq": [
+        18
+      ]
+    }
+  ],
+  "tools_mentioned": [
+    {
+      "key": "instagram_ads",
+      "name": "Instagram",
+      "purpose_he": "מודעות ולידים",
+      "evidence_seq": [
+        2
+      ]
+    },
+    {
+      "key": "whatsapp",
+      "name": "WhatsApp",
+      "purpose_he": "פניות לקוחות",
+      "evidence_seq": [
+        7
+      ]
+    },
+    {
+      "key": "studioflow",
+      "name": "StudioFlow",
+      "purpose_he": "ניהול מנויים",
+      "evidence_seq": [
+        14
+      ]
+    }
+  ],
+  "constraints": [],
+  "budget_signals": [
+    {
+      "key": "value_10_signups",
+      "text_he": "עוד 10 נרשמים בחודש שווים כ-4,000 ש\"ח",
+      "monthly_value_ils": 4000
+    }
+  ],
+  "components": [
+    {
+      "catalog_key": "spec_trd",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": []
+    },
+    {
+      "catalog_key": "lead_intake",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": [
+        2,
+        4
+      ]
+    },
+    {
+      "catalog_key": "whatsapp_bot",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": [
+        7
+      ]
+    },
+    {
+      "catalog_key": "trial_reminders",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": [
+        11
+      ]
+    },
+    {
+      "catalog_key": "owner_dashboard",
+      "reason_he": "",
+      "phase": 2,
+      "evidence_seq": [
+        11
+      ]
+    },
+    {
+      "catalog_key": "existing_system_integration",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": [
+        14
+      ]
+    },
+    {
+      "catalog_key": "qa_rollout",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": []
+    }
+  ],
+  "diagram": {
+    "nodes": [],
+    "edges": []
+  },
+  "whispers": [],
+  "missing_questions": []
+}

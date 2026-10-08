@@ -1,0 +1,7 @@
+node_modules/
+.env
+# הקלטות אמיתיות ותוצרים לא נכנסים לגיט (פרטיות)
+recordings/*
+!recordings/.gitkeep
+out/*
+!out/.gitkeep
