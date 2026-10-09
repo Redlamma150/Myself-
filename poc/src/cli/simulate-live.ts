@@ -8,7 +8,7 @@
 import "./env.js";
 import { basename, dirname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { DEMO_CATALOG } from "../core/catalog.js";
+import { resolveCatalog } from "../core/catalog-file.js";
 import { type Dossier, emptyDossier, monthlyValue } from "../core/dossier.js";
 import { estimate } from "../core/estimate.js";
 import { toWindows } from "../core/windows.js";
@@ -19,6 +19,7 @@ import { fmtMs, readJson, writeJson, writeText } from "./io.js";
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
+    catalog: { type: "string" },
     window: { type: "string", default: "45" },
     model: { type: "string" },
     effort: { type: "string" },
@@ -38,7 +39,8 @@ const transcript = await readJson<Transcript>(input);
 const windowMs = Number(values.window) * 1000;
 const rate = Number(values.rate);
 const windows = toWindows(transcript.segments, windowMs);
-const extractor = new Extractor(DEMO_CATALOG, values.model, values.effort as Effort | undefined);
+const catalog = await resolveCatalog(values.catalog);
+const extractor = new Extractor(catalog, values.model, values.effort as Effort | undefined);
 const model = values.model ?? process.env.LIVESCOPE_MODEL ?? "claude-opus-5-5";
 const outDir = values.out ?? join(dirname(input), "sim", `${basename(input, ".json")}.${model}.${values.effort ?? process.env.LIVESCOPE_EFFORT ?? "low"}`);
 
@@ -86,7 +88,7 @@ for (const w of windows) {
   await writeJson(join(outDir, `dossier-v${String(w.index + 1).padStart(2, "0")}.json`), dossier);
 
   const est = estimate({
-    catalog: DEMO_CATALOG,
+    catalog,
     components: dossier.components.map((c) => ({ key: c.catalog_key, phase: c.phase })),
     hourlyRate: rate,
     clientMonthlyValue: monthlyValue(dossier),
@@ -120,7 +122,7 @@ const failed = rounds.filter((r) => !r.ok).length;
 const dropped = rounds.reduce((s, r) => s + r.droppedKeys.length, 0);
 
 const final = estimate({
-  catalog: DEMO_CATALOG,
+  catalog,
   components: dossier.components.map((c) => ({ key: c.catalog_key, phase: c.phase })),
   hourlyRate: rate,
   clientMonthlyValue: monthlyValue(dossier),
@@ -145,6 +147,8 @@ const md = [
   ``,
   `- רכיבים: ${final.lines.map((l) => `${l.nameHe} (שלב ${l.phase})`).join(", ") || "—"}`,
   `- שעות: ${final.hours[0]}–${final.hours[1]}, מחיר: ₪${final.price[0].toLocaleString()}–${final.price[1].toLocaleString()}, שבועות: ${final.weeks[0]}–${final.weeks[1]}`,
+  ...(final.monthly > 0 ? [`- ריטיינר חודשי: ₪${final.monthly.toLocaleString()}`] : []),
+  ...(final.quoteItems.length ? [`- לפי הצעה, לא בסכום: ${final.quoteItems.map((q) => q.nameHe).join(", ")}`] : []),
   `- החזר השקעה: ${final.roiMonths === null ? "הלקוח לא אמר שווי חודשי" : `${final.roiMonths.toFixed(1)} חודשים`}`,
   ``,
   `## ציר זמן`,

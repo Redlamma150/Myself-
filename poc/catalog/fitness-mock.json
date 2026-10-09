@@ -1,0 +1,191 @@
+{
+  "name": "קטלוג מדומה: מוצרי מאמני כושר (מתוך קובץ המחירים)",
+  "source": "נגזר מקובץ המחירים. קישורי התשלום לא נכללו. שדות 'מתי מתאים' ושעות נגזרות הם ניסוח זמני ודורשים אישור.",
+  "components": [
+    {
+      "key": "register_api",
+      "nameHe": "register api",
+      "whenToUseHe": "לא ברור מהשם. הקובץ לא כולל תיאור. לאישור",
+      "defaultPhase": 1,
+      "category": "פיתוח",
+      "fixedPrice": 600,
+      "hours": [
+        1,
+        2
+      ],
+      "hoursDerived": true,
+      "note": "אין תיאור בקובץ"
+    },
+    {
+      "key": "meals_by_portion",
+      "nameHe": "עמוד ארוחות לפי מנות",
+      "whenToUseHe": "המאמן רוצה שהמתאמנים יראו ויעקבו אחרי ארוחות לפי מנות",
+      "defaultPhase": 1,
+      "category": "פיתוח",
+      "fixedPrice": 1500,
+      "hours": [
+        3,
+        5
+      ],
+      "hoursDerived": true
+    },
+    {
+      "key": "aerobic_tracking",
+      "nameHe": "עמוד מעקב אירובי",
+      "whenToUseHe": "המאמן רוצה מעקב אימונים אירוביים למתאמנים",
+      "defaultPhase": 1,
+      "category": "פיתוח",
+      "fixedPrice": 1000,
+      "hours": [
+        2,
+        4
+      ],
+      "hoursDerived": true
+    },
+    {
+      "key": "cycle_diary",
+      "nameHe": "יומן מעקב מחזור",
+      "whenToUseHe": "מאמנת שעובדת עם נשים ורוצה יומן מעקב מחזור",
+      "defaultPhase": 1,
+      "category": "פיתוח",
+      "fixedPrice": 1500,
+      "hours": [
+        3,
+        5
+      ],
+      "hoursDerived": true
+    },
+    {
+      "key": "recipes_departments",
+      "nameHe": "עמוד מתכונים + מחלקות",
+      "whenToUseHe": "המאמן רוצה עמוד מתכונים מחולק למחלקות לשימוש המתאמנים",
+      "defaultPhase": 1,
+      "category": "עיצוב",
+      "fixedPrice": 800,
+      "hours": [
+        1,
+        3
+      ],
+      "hoursDerived": true
+    },
+    {
+      "key": "supplements_store",
+      "nameHe": "עמוד תוספי תזונה (מיני חנות)",
+      "whenToUseHe": "המאמן מוכר או ממליץ על תוספי תזונה ורוצה מיני חנות",
+      "defaultPhase": 2,
+      "category": "פיתוח",
+      "fixedPrice": 850,
+      "hours": [
+        1,
+        3
+      ],
+      "hoursDerived": true
+    },
+    {
+      "key": "refer_a_friend",
+      "nameHe": "חבר מביא חבר",
+      "whenToUseHe": "המאמן רוצה יותר לידים דרך מתאמנים קיימים, עם הטבות למי שמביא חבר",
+      "defaultPhase": 1,
+      "category": "אוטומציה + עיצוב",
+      "fixedPrice": 800,
+      "hours": [
+        1,
+        3
+      ],
+      "hoursDerived": true,
+      "note": "עמוד שיווקי שכולל צ'ופרים למתתאמנים וגורם עזר נוסף לקבלת לידים."
+    },
+    {
+      "key": "dynamic_forms",
+      "nameHe": "עמוד טפסים דינאמי",
+      "whenToUseHe": "המאמן שולח שאלונים ללקוחות ורוצה לעקוב אחריהם לאורך זמן",
+      "defaultPhase": 1,
+      "category": "פיתוח",
+      "fixedPrice": 1500,
+      "hours": [
+        3,
+        5
+      ],
+      "hoursDerived": true,
+      "note": "עמוד טפסים דינאמי שנשלח ללקוחות+ יכולת מעקב תקופתי אחר השאלונים"
+    },
+    {
+      "key": "metrics_matrix",
+      "nameHe": "עמוד מטריצת מעקב מדדים כולל",
+      "whenToUseHe": "המאמן רוצה לראות במקום אחד את נתוני הליבה של כל המתאמנים לצורך ניתוח",
+      "defaultPhase": 2,
+      "category": "פיתוח",
+      "fixedPrice": 1000,
+      "hours": [
+        2,
+        4
+      ],
+      "hoursDerived": true,
+      "note": "עמוד מעקב מדדים כולל לניתוח נתוני הליבה של הלקוחות"
+    },
+    {
+      "key": "whatsapp_alerts",
+      "nameHe": "עמוד התראות ווצאפ",
+      "whenToUseHe": "המאמן רוצה להזכיר או להתריע למתאמנים בוואטסאפ",
+      "defaultPhase": 1,
+      "monthlyPrice": 150,
+      "hours": [
+        0,
+        0
+      ],
+      "note": "ריטיינר חודשי של 150 ש\"ח"
+    },
+    {
+      "key": "whatsapp_business",
+      "nameHe": "עמוד ווצאפ ביזנס רשמי",
+      "whenToUseHe": "המאמן רוצה חשבון וואטסאפ עסקי רשמי עם תבניות הודעה",
+      "defaultPhase": 2,
+      "fixedPrice": 500,
+      "hours": [
+        1,
+        2
+      ],
+      "hoursDerived": true,
+      "note": "10,000 תבניות ב500 חודש; לא ברור אם 500 ש\"ח הם חד-פעמי או חודשי. מטופל כחד-פעמי עד שיאושר"
+    },
+    {
+      "key": "studio_system",
+      "nameHe": "מערכת סטודיו",
+      "whenToUseHe": "מערכת מלאה לסטודיו. דורשת ריטיינר חודשי ותמחור בהצעה",
+      "defaultPhase": 2,
+      "category": "פיתוח",
+      "quote": true,
+      "hours": [
+        0,
+        0
+      ],
+      "note": "נדרש להגדיר ריטיינר חודשי"
+    },
+    {
+      "key": "recipe_library",
+      "nameHe": "ספריית מתכונים",
+      "whenToUseHe": "המאמן רוצה ספריית מתכונים נפרדת ומלאה",
+      "defaultPhase": 2,
+      "category": "כלים נוספים",
+      "fixedPrice": 1500,
+      "hours": [
+        3,
+        5
+      ],
+      "hoursDerived": true
+    },
+    {
+      "key": "crm_automations",
+      "nameHe": "הקמת אוטומציות בCRM",
+      "whenToUseHe": "המאמן רוצה אוטומציות בתוך ה-CRM. המחיר תלוי במורכבות",
+      "defaultPhase": 1,
+      "category": "אוטומציות",
+      "quote": true,
+      "hours": [
+        0,
+        0
+      ],
+      "note": "מחיר משתנה בהתאם לרמת המורכבות"
+    }
+  ]
+}

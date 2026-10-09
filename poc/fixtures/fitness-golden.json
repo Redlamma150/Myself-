@@ -1,0 +1,129 @@
+{
+  "business": {
+    "type_he": "מאמנת כושר אישית",
+    "branches": null,
+    "summary_he": "כ-45 מתאמנות פעילות, לידים מאינסטגרם, ניהול ידני בוואטסאפ ובטפסים"
+  },
+  "pains": [
+    {
+      "key": "meal_plans_pdf",
+      "text_he": "תפריטים נשלחים כקבצי PDF ידניים, וקשה לעדכן ולעקוב",
+      "severity": "high",
+      "quantified_value": null,
+      "quantified_unit_he": null,
+      "evidence_seq": [],
+      "status": "open"
+    },
+    {
+      "key": "aerobic_manual",
+      "text_he": "מעקב אימוני אירובי נעשה בהודעות וואטסאפ ובידיים",
+      "severity": "med",
+      "quantified_value": null,
+      "quantified_unit_he": null,
+      "evidence_seq": [],
+      "status": "open"
+    },
+    {
+      "key": "forms_scattered",
+      "text_he": "שאלונים נשלחים בטפסי גוגל ואין מעקב תקופתי מסודר",
+      "severity": "med",
+      "quantified_value": null,
+      "quantified_unit_he": null,
+      "evidence_seq": [],
+      "status": "open"
+    },
+    {
+      "key": "few_leads",
+      "text_he": "מעט לידים חדשים, ובעיקר מאינסטגרם",
+      "severity": "med",
+      "quantified_value": null,
+      "quantified_unit_he": null,
+      "evidence_seq": [],
+      "status": "open"
+    }
+  ],
+  "goals": [
+    {
+      "key": "more_trainees",
+      "text_he": "עוד כחמש מתאמנות חדשות בחודש",
+      "evidence_seq": []
+    },
+    {
+      "key": "less_manual",
+      "text_he": "פחות עבודה ידנית בניהול המתאמנות",
+      "evidence_seq": []
+    }
+  ],
+  "tools_mentioned": [
+    {
+      "key": "instagram",
+      "name": "Instagram",
+      "purpose_he": "לידים",
+      "evidence_seq": []
+    },
+    {
+      "key": "whatsapp",
+      "name": "WhatsApp",
+      "purpose_he": "תקשורת ומעקב",
+      "evidence_seq": []
+    },
+    {
+      "key": "google_forms",
+      "name": "Google Forms",
+      "purpose_he": "שאלונים",
+      "evidence_seq": []
+    }
+  ],
+  "constraints": [],
+  "budget_signals": [
+    {
+      "key": "value_5_trainees",
+      "text_he": "חמש מתאמנות חדשות שוות כ-3,000 ש\"ח בחודש",
+      "monthly_value_ils": 3000
+    }
+  ],
+  "components": [
+    {
+      "catalog_key": "meals_by_portion",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": []
+    },
+    {
+      "catalog_key": "aerobic_tracking",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": []
+    },
+    {
+      "catalog_key": "dynamic_forms",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": []
+    },
+    {
+      "catalog_key": "refer_a_friend",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": []
+    },
+    {
+      "catalog_key": "whatsapp_alerts",
+      "reason_he": "",
+      "phase": 1,
+      "evidence_seq": []
+    },
+    {
+      "catalog_key": "supplements_store",
+      "reason_he": "",
+      "phase": 2,
+      "evidence_seq": []
+    }
+  ],
+  "diagram": {
+    "nodes": [],
+    "edges": []
+  },
+  "whispers": [],
+  "missing_questions": []
+}

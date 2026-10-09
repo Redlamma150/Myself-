@@ -9,7 +9,7 @@
 import "./env.js";
 import { basename, extname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { DEMO_CATALOG } from "../core/catalog.js";
+import { resolveCatalog } from "../core/catalog-file.js";
 import { type Dossier, emptyDossier, monthlyValue } from "../core/dossier.js";
 import { estimate } from "../core/estimate.js";
 import { range } from "../core/ltr.js";
@@ -24,6 +24,7 @@ import { fmtMs, writeJson, writeText } from "./io.js";
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
+    catalog: { type: "string" },
     client: { type: "string" },
     consultant: { type: "string" },
     terms: { type: "string", default: "" },
@@ -48,7 +49,8 @@ const windowMs = Number(values.window) * 1000;
 const rate = Number(values.rate);
 const name = two ? "live-two-streams" : basename(single!, extname(single!));
 const outDir = values.out ?? join("out", name, "live-run");
-const extractor = new Extractor(DEMO_CATALOG, values.model, values.effort as Effort | undefined);
+const catalog = await resolveCatalog(values.catalog);
+const extractor = new Extractor(catalog, values.model, values.effort as Effort | undefined);
 
 const buffer = new LiveBuffer();
 const captions = new Captions();
@@ -60,7 +62,7 @@ let startedAt = 0;
 
 const show = (d: Dossier) => {
   const e = estimate({
-    catalog: DEMO_CATALOG,
+    catalog,
     components: d.components.map((c) => ({ key: c.catalog_key, phase: c.phase })),
     hourlyRate: rate,
     clientMonthlyValue: monthlyValue(d),
@@ -91,6 +93,8 @@ async function tick(): Promise<void> {
     if (e.lines.length) {
       console.log(`   רכיבים: ${e.lines.map((l) => l.nameHe).join(", ")}`);
       console.log(`   הערכה: ${range(e.hours[0], e.hours[1], "שעות")}, ${range(e.price[0], e.price[1], "₪")}, ${range(e.weeks[0], e.weeks[1], "שבועות")}`);
+      if (e.monthly > 0) console.log(`   ריטיינר חודשי: ₪${e.monthly.toLocaleString("en-US")}`);
+      if (e.quoteItems.length) console.log(`   לפי הצעה (לא בסכום): ${e.quoteItems.map((q) => q.nameHe).join(", ")}`);
     }
   })()
     .catch((err) => console.error(`   ⚠ סבב נכשל, ממשיכים: ${(err as Error).message}`))

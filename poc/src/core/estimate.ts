@@ -30,7 +30,14 @@ export interface Estimate {
   /** חודשים עד החזר: אמצע טווח המחיר חלקי השווי החודשי */
   roiMonths: number | null;
   hourlyRate: number;
-  lines: { key: string; nameHe: string; hours: Range; rate: number; phase: 1 | 2 }[];
+  /** סך הריטיינרים החודשיים, בנפרד מהמחיר החד-פעמי */
+  monthly: number;
+  /** רכיבים שהמחיר שלהם נקבע בהצעה, ולכן אינם בסכום */
+  quoteItems: { key: string; nameHe: string }[];
+  lines: {
+    key: string; nameHe: string; hours: Range; rate: number; phase: 1 | 2;
+    kind: "hourly" | "fixed" | "monthly" | "quote"; price: Range;
+  }[];
 }
 
 export function weeksFor(hours: number): number {
@@ -43,33 +50,38 @@ export function estimate(input: EstimateInput): Estimate {
     .filter((s) => !s.removed)
     .map((s) => {
       const c = findComponent(input.catalog, s.key);
-      return {
-        key: c.key,
-        nameHe: c.nameHe,
-        hours: hoursFor(c, s.variant),
-        rate: s.hourlyRateOverride ?? rate,
-        phase: s.phase ?? c.defaultPhase,
-      };
+      const rate0 = s.hourlyRateOverride ?? rate;
+      const hours = hoursFor(c, s.variant);
+      const kind: "hourly" | "fixed" | "monthly" | "quote" = c.quote ? "quote" : c.monthlyPrice !== undefined ? "monthly" : c.fixedPrice !== undefined ? "fixed" : "hourly";
+      const price: Range =
+        kind === "fixed" ? [c.fixedPrice!, c.fixedPrice!]
+        : kind === "hourly" ? [hours[0] * rate0, hours[1] * rate0]
+        : [0, 0];
+      return { key: c.key, nameHe: c.nameHe, hours: kind === "quote" || kind === "monthly" ? ([0, 0] as Range) : hours, rate: rate0, phase: s.phase ?? c.defaultPhase, kind, price, monthlyPrice: c.monthlyPrice ?? 0 };
     })
     .filter((l) => input.phase === undefined || l.phase === input.phase);
 
-  let hMin = 0, hMax = 0, pMin = 0, pMax = 0;
+  let hMin = 0, hMax = 0, pMin = 0, pMax = 0, monthly = 0;
   for (const l of lines) {
     hMin += l.hours[0];
     hMax += l.hours[1];
-    pMin += l.hours[0] * l.rate;
-    pMax += l.hours[1] * l.rate;
+    pMin += l.price[0];
+    pMax += l.price[1];
+    monthly += l.monthlyPrice;
   }
+  const quoteItems = lines.filter((l) => l.kind === "quote").map((l) => ({ key: l.key, nameHe: l.nameHe }));
 
   const value = input.clientMonthlyValue;
-  const roiMonths = value && value > 0 && lines.length ? (pMin + pMax) / 2 / value : null;
+  const roiMonths = value && value > 0 && pMax > 0 ? (pMin + pMax) / 2 / value : null;
 
   return {
     hours: [hMin, hMax],
     price: [pMin, pMax],
-    weeks: lines.length ? [weeksFor(hMin), weeksFor(hMax)] : [0, 0],
+    weeks: hMax > 0 ? [weeksFor(hMin), weeksFor(hMax)] : [0, 0],
     roiMonths,
     hourlyRate: rate,
-    lines,
+    monthly,
+    quoteItems,
+    lines: lines.map(({ monthlyPrice: _m, ...l }) => l),
   };
 }

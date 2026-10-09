@@ -15,10 +15,23 @@ export interface CatalogComponent {
   /** רק לרכיבים שתלויים בבדיקה ברקע */
   variants?: Partial<Record<Variant, Range>>;
   defaultPhase: 1 | 2;
+  category?: string;
+  /** מחיר קבוע חד-פעמי בש"ח. אם קיים, הוא קובע את המחיר במקום שעות × תעריף. */
+  fixedPrice?: number;
+  /** ריטיינר חודשי בש"ח. מוצג בנפרד ולא נכלל במחיר החד-פעמי. */
+  monthlyPrice?: number;
+  /** המחיר נקבע בהצעה ולא נכלל בסכום */
+  quote?: boolean;
+  /** נכלל בכל פרויקט שיש בו לפחות רכיב אחד נוסף (אפיון, בדיקות) */
+  always?: boolean;
+  /** השעות נגזרו מהמחיר ולא נמדדו. משמשות רק לחישוב משך. */
+  hoursDerived?: boolean;
+  /** הערה חופשית שנשלחת גם ל-Claude */
+  note?: string;
 }
 
 export const DEMO_CATALOG: readonly CatalogComponent[] = [
-  { key: "spec_trd", nameHe: "אפיון ו-TRD", whenToUseHe: "תמיד, בכל פרויקט", hours: [8, 10], defaultPhase: 1 },
+  { key: "spec_trd", nameHe: "אפיון ו-TRD", whenToUseHe: "תמיד, בכל פרויקט", hours: [8, 10], defaultPhase: 1, always: true },
   { key: "lead_intake", nameHe: "קליטת לידים ממטא ל-CRM", whenToUseHe: "לידים מגיעים ממודעות או טפסים ומטופלים ידנית או באיחור", hours: [12, 18], defaultPhase: 1 },
   { key: "whatsapp_bot", nameHe: "בוט וואטסאפ: סינון ותיאום", whenToUseHe: "פניות בוואטסאפ, כולל מחוץ לשעות הפעילות, שצריך לענות עליהן ולתאם", hours: [26, 36], defaultPhase: 1 },
   { key: "trial_reminders", nameHe: "תזכורות לשיעור ניסיון", whenToUseHe: "אנשים נקבעים לפגישה או שיעור ולא מגיעים", hours: [8, 12], defaultPhase: 1 },
@@ -31,7 +44,7 @@ export const DEMO_CATALOG: readonly CatalogComponent[] = [
     variants: { unknown: [10, 24], verified_api: [10, 14] },
     defaultPhase: 1,
   },
-  { key: "qa_rollout", nameHe: "בדיקות והטמעה", whenToUseHe: "תמיד, בסוף כל פרויקט", hours: [10, 12], defaultPhase: 1 },
+  { key: "qa_rollout", nameHe: "בדיקות והטמעה", whenToUseHe: "תמיד, בסוף כל פרויקט", hours: [10, 12], defaultPhase: 1, always: true },
 ];
 
 export function findComponent(catalog: readonly CatalogComponent[], key: string): CatalogComponent {
