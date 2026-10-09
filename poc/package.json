@@ -10,7 +10,8 @@
     "estimate": "tsx src/cli/estimate.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "transcribe:live": "tsx src/cli/transcribe-live.ts"
+    "transcribe:live": "tsx src/cli/transcribe-live.ts",
+    "live": "tsx src/cli/live-run.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.132.1",

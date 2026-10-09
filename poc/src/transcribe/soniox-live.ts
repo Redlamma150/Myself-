@@ -32,6 +32,8 @@ export interface LiveOptions {
   chunkMs?: number;
   /** כמה זמן מחכים לסיום אחרי שהאודיו נגמר */
   finishTimeoutMs?: number;
+  /** נקרא בכל פעם שמתקבלים טוקנים סופיים חדשים. כך מחברים את התמלול לשאר המערכת בזמן אמת. */
+  onFinalTokens?: (tokens: LiveToken[]) => void;
 }
 
 export interface LiveResult {
@@ -94,19 +96,23 @@ export async function runLiveSession(opts: LiveOptions): Promise<LiveResult> {
       const res = JSON.parse(data.toString()) as { error_code?: number; error_message?: string; tokens?: RawToken[]; finished?: boolean };
       if (res.error_code) return done(new Error(`Soniox ${res.error_code}: ${res.error_message}`));
       const now = Date.now() - t0;
+      const fresh: LiveToken[] = [];
       for (const t of res.tokens ?? []) {
         if (!t.text || !t.is_final) continue; // טוקנים לא סופיים משתנים, ולכן לא שומרים אותם
         firstTokenMs ??= now;
         const endMs = t.end_ms ?? null;
-        tokens.push({
+        const tok: LiveToken = {
           text: t.text,
           startMs: t.start_ms ?? null,
           endMs,
           speaker: t.speaker === undefined ? null : String(t.speaker),
           receivedMs: now,
           latencyMs: endMs === null ? null : now - endMs,
-        });
+        };
+        tokens.push(tok);
+        fresh.push(tok);
       }
+      if (fresh.length) opts.onFinalTokens?.(fresh);
       if (res.finished) done();
     });
 

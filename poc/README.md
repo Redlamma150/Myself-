@@ -65,6 +65,24 @@ npm run transcribe:live -- --client recordings/client.pcm --consultant recording
 - **לא נבדק מול Soniox אמיתי:** הלקוח נבדק רק מול שרת מדומה, לפי הדוגמה הרשמית שלהם. הריצה הראשונה עם מפתח אמיתי היא גם בדיקת החיבור.
 - לגבי הדפדפן: במערכת המלאה הדפדפן מקבל מפתח זמני מהשרת (`POST /v1/auth/temporary-api-key` עם `usage_type: transcribe_websocket`, תוקף 60 שניות, לפי שרת הדוגמה שלהם), ולא את המפתח הקבוע.
 
+### 1א. חיבור Soniox ל-Claude בזמן אמת
+
+אין מחבר מוכן בין Soniox ל-Claude, ולא צריך כזה. Soniox מחזיר טקסט, ו-Claude מקבל טקסט. החיבור הוא הקוד שלנו:
+
+```
+הקלטה ← Soniox (תמלול חי) ← המצבר שאוסף שורות ← כל 45 שנ׳ ← Claude ← תיק אבחון ← חישוב הערכה ← מסך
+```
+
+```bash
+npm run live -- recordings/call1.pcm --terms "StudioFlow" --rate 380
+npm run live -- --client recordings/client.pcm --consultant recordings/consultant.pcm   # שני זרמים
+```
+- דרושים `SONIOX_API_KEY` ו-`ANTHROPIC_API_KEY` ב-`.env`. כל אחד מהם נוצר בקונסולה של הספק (console.soniox.com ו-console.anthropic.com).
+- הסקריפט משדר בקצב אמיתי, ובכל `--window` שניות (ברירת מחדל 45) שולח ל-Claude את מה שנאמר מאז הסבב הקודם. אחרי כל סבב הוא מדפיס לחישות חדשות, רכיבים והערכה.
+- אם סבב נכשל, הוא מדלג ומשאיר את התיק הקודם. הסבב הבא ממשיך.
+- בסוף נשמרים `report.md` (השהיית תמלול, זמן Claude, עלות), תיק לכל סבב, והתמלול.
+- נבדק רק מול שרתים מדומים של שני הספקים. הריצה הראשונה עם מפתחות אמיתיים היא גם בדיקת החיבור.
+
 ### 1ב. תמלול קובץ אחרי השיחה (השוואה ומסלול גיבוי)
 ```bash
 npm run transcribe -- recordings/call1.mp3 --terms "StudioFlow,Meta,WhatsApp"          # Soniox
