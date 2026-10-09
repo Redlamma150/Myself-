@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "transcribe:live": "tsx src/cli/transcribe-live.ts",
-    "live": "tsx src/cli/live-run.ts"
+    "live": "tsx src/cli/live-run.ts",
+    "capture": "tsx src/capture/server.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.132.1",

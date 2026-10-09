@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiveScope: דף לכידה</title>
+<style>
+:root{--paper:#EEF1F4;--surface:#fff;--ink:#182338;--graphite:#4A5261;--line:#C9D1DB;--mark:#F2C230;--ok:#0F7B6C;--warn:#B4441F;--client:#0F7B6C;--consultant:#182338}
+@media (prefers-color-scheme:dark){:root{--paper:#111827;--surface:#1A2335;--ink:#E8ECF2;--graphite:#A5AEBD;--line:#2E3A50;--mark:#E3B524;--ok:#45C4AC;--warn:#F08A62;--client:#45C4AC;--consultant:#E8ECF2;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 64px;display:flex;flex-direction:column;gap:20px}
+h1{margin:0;font-size:26px}
+p{margin:0}
+.muted{color:var(--graphite);font-size:15px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:15px;color:var(--graphite)}
+select,input[type=text]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:inherit;padding:10px 18px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer}
+button.secondary{background:transparent;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+.streams{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.stream{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.stream b{font-size:16px}
+.meter{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.meter>i{display:block;height:100%;width:0;background:var(--ok);transition:width .1s}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--line);margin-inline-end:6px}
+.dot.on{background:var(--ok)}.dot.err{background:var(--warn)}
+#transcript{min-height:220px;max-height:55vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.line{display:flex;gap:8px}
+.t{color:var(--graphite);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;flex:none}
+.who{font-weight:700;flex:none}
+.who.client{color:var(--client)}.who.consultant{color:var(--consultant)}
+.pending{color:var(--graphite);font-style:italic}
+.err{color:var(--warn)}
+ol{margin:0;padding-inline-start:22px;display:flex;flex-direction:column;gap:4px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>LiveScope: דף לכידה (גרסת ניסוי)</h1>
+    <p class="muted">לוכד את קול הלקוח מהלשונית ואת קולך מהמיקרופון, ומתמלל את שניהם בזמן אמת, בנפרד. כך תמיד ברור מי אמר מה.</p>
+  </header>
+
+  <section class="card">
+    <ol>
+      <li>פותחים את שיחת ה-Meet או ה-Zoom (בדפדפן) <b>בלשונית נפרדת</b> של כרום.</li>
+      <li>לוחצים "התחל". בחלון שנפתח בוחרים את <b>לשונית השיחה</b> ומסמנים <b>"שתף גם אודיו של הלשונית"</b>.</li>
+      <li>מאשרים את המיקרופון. <b>חשוב להשתמש באוזניות</b>, אחרת המיקרופון ישמע גם את הלקוח, והוא יתומלל פעמיים.</li>
+    </ol>
+    <label>מצב
+      <select id="mode">
+        <option value="two">לשונית + מיקרופון: שני זרמים נפרדים (מומלץ)</option>
+        <option value="mic">מיקרופון בלבד, עם זיהוי דוברים (לבדיקה בחדר, בלי שיחה בדפדפן)</option>
+      </select>
+    </label>
+    <label>מונחים חשובים לזיהוי, מופרדים בפסיק (שמות כלים, שמות עסקים)
+      <input id="terms" type="text" placeholder="StudioFlow, RBOX, WhatsApp">
+    </label>
+    <div class="row">
+      <button id="start">התחל</button>
+      <button id="stop" class="secondary" disabled>עצור</button>
+      <span id="status" class="muted" role="status"></span>
+    </div>
+  </section>
+
+  <section class="streams" id="streams" hidden></section>
+
+  <section class="card">
+    <div class="row">
+      <b>תמלול חי</b>
+      <span class="muted">טקסט אפור נטוי עדיין עשוי להשתנות</span>
+    </div>
+    <div id="transcript" aria-live="polite"><span class="muted">התמלול יופיע כאן.</span></div>
+    <div class="row">
+      <button id="dl-json" class="secondary" disabled>הורד JSON (לסקריפטים)</button>
+      <button id="dl-txt" class="secondary" disabled>הורד טקסט</button>
+      <button id="flip" class="secondary" disabled hidden>הפוך יועץ ולקוח</button>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { buildLines, fmt, isMarker, labelLines, toText, toTranscript } from "./lib.js";
+
+const $ = (id) => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const TEST_TAB_FROM_MIC = params.has("testTabFromMic"); // לבדיקות אוטומטיות בלבד
+
+let streams = [];
+let t0 = 0;
+let running = false;
+let flip = false;
+let meterTimer = null;
+let audioCtx = null;
+
+function setStatus(text, isErr = false) {
+  $("status").textContent = text;
+  $("status").className = isErr ? "err" : "muted";
+}
+
+async function api(path, init) {
+  const r = await fetch(path, init);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error ?? `שגיאה ${r.status}`);
+  return data;
+}
+
+function makeStream({ id, name, forced, mediaStream, diarization, terms, wsUrl }) {
+  const s = {
+    id, name, forced, mediaStream, diarization, terms, wsUrl,
+    finals: [], pending: [], offsetMs: 0, ws: null, recorder: null, analyser: null,
+    state: "connecting", finished: false, error: null, count: 0,
+  };
+  s.card = document.createElement("div");
+  s.card.className = "stream";
+  s.card.innerHTML = `<b><span class="dot"></span>${name}</b><span class="muted" data-state>מתחבר…</span><div class="meter"><i></i></div>`;
+  $("streams").appendChild(s.card);
+  return s;
+}
+
+function updateCard(s) {
+  const dot = s.card.querySelector(".dot");
+  dot.className = "dot" + (s.error ? " err" : s.state === "live" ? " on" : "");
+  const label = s.error ? `שגיאה: ${s.error}` : s.state === "live" ? `מתמלל. ${s.count} מילים סופיות` : s.state === "done" ? "הסתיים" : "מתחבר…";
+  s.card.querySelector("[data-state]").textContent = label;
+}
+
+async function openSession(s) {
+  const { apiKey } = await api("/api/temp-key", { method: "POST" });
+  await new Promise((resolve, reject) => {
+    const ws = new WebSocket(s.wsUrl);
+    s.ws = ws;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        api_key: apiKey,
+        model: "stt-rt-v5",
+        audio_format: "auto",
+        language_hints: ["he", "en"],
+        enable_speaker_diarization: s.diarization,
+        enable_endpoint_detection: true,
+        ...(s.terms.length ? { context: { terms: s.terms } } : {}),
+      }));
+      const audioOnly = new MediaStream(s.mediaStream.getAudioTracks());
+      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "";
+      s.recorder = new MediaRecorder(audioOnly, mime ? { mimeType: mime } : {});
+      s.recorder.ondataavailable = (e) => {
+        if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) ws.send(e.data);
+      };
+      s.offsetMs = performance.now() - t0;
+      s.recorder.start(120);
+      s.state = "live";
+      updateCard(s);
+      resolve();
+    };
+    ws.onerror = () => reject(new Error("החיבור ל-Soniox נכשל"));
+    ws.onmessage = (ev) => {
+      const res = JSON.parse(ev.data);
+      if (res.error_code) {
+        s.error = `${res.error_code} ${res.error_message ?? ""}`;
+        updateCard(s);
+        return;
+      }
+      const pending = [];
+      for (const t of res.tokens ?? []) {
+        if (!t.text || isMarker(t.text)) continue;
+        const tok = { text: t.text, startMs: t.start_ms ?? null, endMs: t.end_ms ?? null, speaker: t.speaker == null ? null : String(t.speaker) };
+        if (t.is_final) { s.finals.push(tok); s.count++; } else pending.push(tok);
+      }
+      s.pending = pending;
+      if (res.finished) { s.finished = true; s.state = "done"; }
+      updateCard(s);
+      render();
+    };
+    ws.onclose = () => { if (s.state !== "done") { s.state = "done"; updateCard(s); } };
+  });
+}
+
+function attachMeter(s) {
+  try {
+    audioCtx ??= new AudioContext();
+    const src = audioCtx.createMediaStreamSource(new MediaStream(s.mediaStream.getAudioTracks()));
+    s.analyser = audioCtx.createAnalyser();
+    s.analyser.fftSize = 512;
+    src.connect(s.analyser);
+  } catch { /* המד הוא רק עזר ויזואלי */ }
+}
+
+function startMeters() {
+  const buf = new Uint8Array(512);
+  meterTimer = setInterval(() => {
+    for (const s of streams) {
+      if (!s.analyser) continue;
+      s.analyser.getByteTimeDomainData(buf);
+      let sum = 0;
+      for (const v of buf) { const d = (v - 128) / 128; sum += d * d; }
+      s.card.querySelector(".meter>i").style.width = `${Math.min(100, Math.sqrt(sum / buf.length) * 400)}%`;
+    }
+  }, 100);
+}
+
+function currentLabeled() {
+  const lines = buildLines(streams.map((s) => ({ forced: s.forced, offsetMs: s.offsetMs, finals: s.finals })));
+  return labelLines(lines, !flip);
+}
+
+function render() {
+  const el = $("transcript");
+  const labeled = currentLabeled();
+  const pendingRows = streams.filter((s) => s.pending.length).map((s) => ({
+    who: s.forced ?? "consultant", text: s.pending.map((t) => t.text).join("").trim(),
+  }));
+  el.replaceChildren();
+  const name = { consultant: "יועץ", client: "לקוח", unknown: "?" };
+  for (const l of labeled) {
+    const d = document.createElement("div");
+    d.className = "line";
+    d.innerHTML = `<span class="t">[${fmt(l.startMs)}]</span><span class="who ${l.speaker}">${name[l.speaker]}:</span><span></span>`;
+    d.lastChild.textContent = l.text;
+    el.appendChild(d);
+  }
+  for (const p of pendingRows) {
+    if (!p.text) continue;
+    const d = document.createElement("div");
+    d.className = "line pending";
+    d.textContent = `… ${p.text}`;
+    el.appendChild(d);
+  }
+  if (!labeled.length && !pendingRows.length) el.innerHTML = '<span class="muted">מאזין…</span>';
+  el.scrollTop = el.scrollHeight;
+  const has = labeled.length > 0;
+  $("dl-json").disabled = $("dl-txt").disabled = !has;
+  const mic = streams.length === 1 && streams[0].diarization;
+  $("flip").hidden = !mic;
+  $("flip").disabled = !has;
+}
+
+function download(name, text, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+async function start() {
+  if (running) return;
+  running = true;
+  streams = [];
+  $("streams").replaceChildren();
+  $("streams").hidden = false;
+  $("start").disabled = true;
+  $("transcript").innerHTML = '<span class="muted">מתחבר…</span>';
+  setStatus("מבקש הרשאות…");
+  try {
+    const mode = $("mode").value;
+    const terms = $("terms").value.split(",").map((t) => t.trim()).filter(Boolean);
+    const { wsUrl } = await api("/api/config");
+    const mic = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
+    });
+    const list = [];
+    if (mode === "two") {
+      const tab = TEST_TAB_FROM_MIC
+        ? await navigator.mediaDevices.getUserMedia({ audio: true })
+        : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      if (tab.getAudioTracks().length === 0) {
+        tab.getTracks().forEach((t) => t.stop());
+        mic.getTracks().forEach((t) => t.stop());
+        throw new Error('לא נקלט אודיו מהלשונית. בחלון הבחירה צריך לבחור "לשונית" (Tab) ולסמן "שתף גם אודיו של הלשונית".');
+      }
+      list.push(makeStream({ id: "tab", name: "לקוח (אודיו הלשונית)", forced: "client", mediaStream: tab, diarization: false, terms, wsUrl }));
+      list.push(makeStream({ id: "mic", name: "יועץ (מיקרופון)", forced: "consultant", mediaStream: mic, diarization: false, terms, wsUrl }));
+    } else {
+      list.push(makeStream({ id: "mic", name: "מיקרופון (זיהוי דוברים)", forced: null, mediaStream: mic, diarization: true, terms, wsUrl }));
+    }
+    streams = list;
+    t0 = performance.now();
+    setStatus("מתחבר ל-Soniox…");
+    await Promise.all(streams.map((s) => openSession(s).catch((e) => { s.error = e.message; updateCard(s); throw e; })));
+    streams.forEach(attachMeter);
+    startMeters();
+    setStatus("מתמלל. אפשר לדבר.");
+    $("stop").disabled = false;
+    render();
+  } catch (e) {
+    setStatus(e.message ?? String(e), true);
+    await stop(true);
+  }
+}
+
+async function stop(failed = false) {
+  if (!running) return;
+  $("stop").disabled = true;
+  clearInterval(meterTimer);
+  for (const s of streams) {
+    try { s.recorder?.state !== "inactive" && s.recorder?.stop(); } catch {}
+    try { if (s.ws?.readyState === WebSocket.OPEN) s.ws.send(""); } catch {} // סימן סוף אודיו
+  }
+  // ממתינים עד 8 שניות לטקסט האחרון
+  const deadline = Date.now() + 8000;
+  while (!failed && Date.now() < deadline && streams.some((s) => s.ws && !s.finished && !s.error)) {
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  for (const s of streams) {
+    try { s.ws?.close(); } catch {}
+    s.mediaStream.getTracks().forEach((t) => t.stop());
+    s.state = "done";
+    updateCard(s);
+  }
+  try { await audioCtx?.close(); } catch {}
+  audioCtx = null;
+  running = false;
+  $("start").disabled = false;
+  if (!failed) setStatus("הסתיים. אפשר להוריד את התמלול.");
+  render();
+}
+
+$("start").addEventListener("click", start);
+$("stop").addEventListener("click", () => stop());
+$("flip").addEventListener("click", () => { flip = !flip; render(); });
+$("dl-json").addEventListener("click", () =>
+  download(`livescope-${Date.now()}.json`, JSON.stringify(toTranscript(currentLabeled()), null, 2), "application/json"));
+$("dl-txt").addEventListener("click", () => download(`livescope-${Date.now()}.txt`, toText(currentLabeled()), "text/plain"));
+
+window.__livescope = { get streams() { return streams; }, labeled: currentLabeled }; // לבדיקות אוטומטיות
+</script>
+</body>
+</html>
