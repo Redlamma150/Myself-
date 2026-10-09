@@ -20,6 +20,8 @@ export interface Transcript {
   /** זמן ריצה של הספק, מהשליחה ועד התוצאה */
   processingMs: number | null;
   segments: Segment[];
+  /** הערות מניקוי התמלול (הזיות, חזרות) */
+  warnings?: string[];
 }
 
 /**

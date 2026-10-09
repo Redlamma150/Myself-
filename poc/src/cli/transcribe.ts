@@ -7,6 +7,7 @@ import { basename, extname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { transcribeDeepgram } from "../transcribe/deepgram.js";
 import { transcribeSoniox } from "../transcribe/soniox.js";
+import { cleanTranscript } from "../transcribe/clean.js";
 import { assignSpeakers, type Transcript } from "../transcribe/types.js";
 import { fmtMs, writeJson, writeText } from "./io.js";
 
@@ -46,12 +47,18 @@ for (const p of providers) {
       processingMs: r.processingMs,
       segments,
     };
-    await writeJson(join(outDir, `transcript.${p}.json`), t);
+    const { transcript: cleaned, rejected } = cleanTranscript(t);
+    for (const w of cleaned.warnings ?? []) console.warn(`  ⚠ ${w}`);
+    if (rejected) {
+      await writeJson(join(outDir, `transcript.${p}.rejected.json`), cleaned);
+      throw new Error("התמלול נדחה כחשוד בהזיה. לא נשמר כתמלול תקין.");
+    }
+    await writeJson(join(outDir, `transcript.${p}.json`), cleaned);
     await writeText(
       join(outDir, `transcript.${p}.txt`),
-      segments.map((s) => `[${fmtMs(s.startMs)}] ${s.speaker === "consultant" ? "יועץ" : s.speaker === "client" ? "לקוח" : "?"}: ${s.text}`).join("\n") + "\n",
+      cleaned.segments.map((s) => `[${fmtMs(s.startMs)}] ${s.speaker === "consultant" ? "יועץ" : s.speaker === "client" ? "לקוח" : "?"}: ${s.text}`).join("\n") + "\n",
     );
-    console.log(`✓ ${segments.length} שורות, ${(r.processingMs / 1000).toFixed(1)} שניות עיבוד → ${outDir}/transcript.${p}.json`);
+    console.log(`✓ ${cleaned.segments.length} שורות, ${(r.processingMs / 1000).toFixed(1)} שניות עיבוד → ${outDir}/transcript.${p}.json`);
   } catch (e) {
     console.error(`✗ ${p}: ${(e as Error).message}`);
     process.exitCode = 1;

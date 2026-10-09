@@ -2,6 +2,7 @@
 // לפני הריצה הראשונה: לוודא בתיעוד של Deepgram שהמודל (ברירת מחדל nova-3) תומך ב-he לקבצים מוקלטים,
 // ואם לא, להגדיר DEEPGRAM_MODEL אחר ב-.env.
 import { readFile } from "node:fs/promises";
+import { HttpError, withRetry } from "./retry.js";
 import { groupWords, type Segment } from "./types.js";
 
 interface DgWord {
@@ -29,15 +30,16 @@ export async function transcribeDeepgram(audioPath: string, opts: DeepgramOption
   for (const t of opts.terms ?? []) qs.append("keyterm", t);
 
   const t0 = Date.now();
-  const res = await fetch(`https://api.deepgram.com/v1/listen?${qs}`, {
-    method: "POST",
-    headers: { Authorization: `Token ${key}`, "Content-Type": "application/octet-stream" },
-    body: await readFile(audioPath),
+  const audio = await readFile(audioPath);
+  const json = await withRetry(async () => {
+    const res = await fetch(`https://api.deepgram.com/v1/listen?${qs}`, {
+      method: "POST",
+      headers: { Authorization: `Token ${key}`, "Content-Type": "application/octet-stream" },
+      body: audio,
+    });
+    if (!res.ok) throw new HttpError(res.status, `Deepgram: HTTP ${res.status} ${await res.text()}`);
+    return (await res.json()) as { results?: { channels?: { alternatives?: { words?: DgWord[] }[] }[] } };
   });
-  if (!res.ok) throw new Error(`Deepgram: HTTP ${res.status} ${await res.text()}`);
-  const json = (await res.json()) as {
-    results?: { channels?: { alternatives?: { words?: DgWord[] }[] }[] };
-  };
   const processingMs = Date.now() - t0;
 
   const dgWords = json.results?.channels?.[0]?.alternatives?.[0]?.words ?? [];

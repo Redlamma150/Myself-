@@ -2,6 +2,7 @@
 // מעלים קובץ, יוצרים תמלול, ממתינים, מושכים טוקנים, ומוחקים את הקובץ והתמלול אצל Soniox.
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
+import { HttpError, withRetry } from "./retry.js";
 import { groupWords, type Segment } from "./types.js";
 
 const BASE = "https://api.soniox.com";
@@ -9,12 +10,14 @@ const BASE = "https://api.soniox.com";
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const key = process.env.SONIOX_API_KEY;
   if (!key) throw new Error("חסר SONIOX_API_KEY ב-.env");
-  const res = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${key}`, ...(init.headers ?? {}) },
+  return withRetry(async () => {
+    const res = await fetch(`${BASE}${path}`, {
+      ...init,
+      headers: { Authorization: `Bearer ${key}`, ...(init.headers ?? {}) },
+    });
+    if (!res.ok) throw new HttpError(res.status, `Soniox ${init.method ?? "GET"} ${path}: HTTP ${res.status} ${await res.text()}`);
+    return (init.method === "DELETE" ? null : await res.json()) as T;
   });
-  if (!res.ok) throw new Error(`Soniox ${init.method ?? "GET"} ${path}: HTTP ${res.status} ${await res.text()}`);
-  return (init.method === "DELETE" ? null : await res.json()) as T;
 }
 
 interface SonioxToken {
