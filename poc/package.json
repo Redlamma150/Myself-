@@ -9,14 +9,17 @@
     "score": "tsx src/cli/score-dossier.ts",
     "estimate": "tsx src/cli/estimate.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "transcribe:live": "tsx src/cli/transcribe-live.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.132.1",
+    "ws": "^8.22.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
+    "@types/ws": "^8.18.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"

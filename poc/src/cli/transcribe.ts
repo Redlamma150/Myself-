@@ -14,7 +14,7 @@ import { fmtMs, writeJson, writeText } from "./io.js";
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
-    provider: { type: "string", default: "both" },
+    provider: { type: "string", default: "soniox" },
     terms: { type: "string", default: "" },
     "consultant-speaker": { type: "string" },
     out: { type: "string" },

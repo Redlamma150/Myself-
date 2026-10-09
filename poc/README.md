@@ -2,11 +2,11 @@
 
 סקריפטים שעונים על שלוש שאלות לפני שבונים משהו:
 
-1. **תמלול:** האם Soniox או Deepgram מתמללים עברית מספיק טוב, במיוחד מספרים, סכומים ושמות כלים?
+1. **תמלול חי:** האם Soniox מתמלל עברית מספיק טוב ומספיק מהר, תוך כדי שיחה, במיוחד מספרים, סכומים ושמות כלים?
 2. **הבנה:** האם Claude מוצא מהתמלול את הכאבים והרכיבים שהייתם כותבים בעצמכם?
 3. **זמן ועלות:** כמה זמן עובר מדיבור ועד עדכון מסך, וכמה עולה שיחה?
 
-התוצאה היא החלטה: חי, או עיבוד מיד אחרי השיחה. ראו את סעיף 9 ב-[`docs/livescope-plan.md`](../docs/livescope-plan.md).
+המטרה היא תמלול חי, כדי שהמערכת תרוץ במקביל לשיחה. Soniox הוא הספק הראשי, ו-Fireflies הוא הגיבוי אם Soniox לא עומד בספים למטה. ראו את סעיף 9 ב-[`docs/livescope-plan.md`](../docs/livescope-plan.md).
 
 ## התקנה
 
@@ -23,7 +23,7 @@ npm test               # בדיקות, בלי רשת ובלי עלות
 |---|---|
 | `ANTHROPIC_API_KEY` | console.anthropic.com |
 | `SONIOX_API_KEY` | console.soniox.com |
-| `DEEPGRAM_API_KEY` | console.deepgram.com |
+| `DEEPGRAM_API_KEY` | אופציונלי. Deepgram יצא מהתכנון, והסקריפט נשאר רק להשוואה |
 | `LIVESCOPE_MODEL`, `LIVESCOPE_EFFORT` | אופציונלי. ברירת מחדל `claude-opus-5-5`, `low` |
 
 ## לנסות בלי הקלטה ובלי מפתחות
@@ -45,23 +45,41 @@ npm run estimate -- fixtures/demo-golden.json --verified --phase 1 --rate 420
 - מקליטים שתי שיחות אמיתיות, **רק בהסכמת הלקוח** בתחילת השיחה.
 - שמים את הקבצים ב-`recordings/` (mp3, wav, m4a). התיקייה לא נכנסת לגיט.
 
-### 1. תמלול בשני הספקים
+### 1. תמלול חי (הבדיקה המרכזית)
+קודם ממירים את ההקלטה לפורמט שמאפשר מדידה מדויקת (דורש ffmpeg):
 ```bash
-npm run transcribe -- recordings/call1.mp3 --provider both --terms "StudioFlow,Meta,WhatsApp"
+ffmpeg -i recordings/call1.mp3 -ac 1 -ar 16000 -f s16le recordings/call1.pcm
 ```
-- התוצאה נשמרת ב-`out/call1/`: קובץ `transcript.soniox.json` וקובץ `transcript.deepgram.json`, ולכל אחד גם גרסת `.txt` קריאה.
-- `--terms` הם מונחים שחשוב שיזוהו נכון. שני הספקים משתמשים בהם כרמז.
+אחר כך משדרים ל-Soniox בקצב אמיתי, כאילו זו שיחה:
+```bash
+# זרם אחד עם זיהוי דוברים
+npm run transcribe:live -- recordings/call1.pcm --terms "StudioFlow,Meta,WhatsApp"
+
+# שני זרמים נפרדים: לשונית הלקוח ומיקרופון היועץ (מומלץ, בלי ניחוש מי מדבר)
+npm run transcribe:live -- --client recordings/client.pcm --consultant recordings/consultant.pcm
+```
+- התוצאה נשמרת ב-`out/<שם>/`: `transcript.soniox-live.json`, גרסת `.txt` קריאה, ו-`live-metrics.json`.
+- **ההשהיה** היא הזמן בין הרגע שמילה נאמרה לרגע שהתקבלה כטקסט סופי. הסקריפט מדפיס חציון, 90% ומקסימום, וגם כמה זמן עבר עד הטוקן הראשון.
 - הדובר הראשון שמדבר מסומן כיועץ. אם יצא הפוך, מוסיפים `--consultant-speaker 1` (או 0).
-- אחרי התמלול הסקריפט **מוחק את הקובץ והתמלול אצל Soniox**.
-- **Deepgram:** לפני הריצה הראשונה צריך לוודא בתיעוד שלהם שהמודל (`nova-3`) תומך ב-`he` גם לקבצים מוקלטים. אם לא, מגדירים `DEEPGRAM_MODEL` אחר.
+- אחרי הקבלה, התמלול עובר את אותו ניקוי הזיות ושגיאות זמניות מנוסות שוב.
+- **לא נבדק מול Soniox אמיתי:** הלקוח נבדק רק מול שרת מדומה, לפי הדוגמה הרשמית שלהם. הריצה הראשונה עם מפתח אמיתי היא גם בדיקת החיבור.
+- לגבי הדפדפן: במערכת המלאה הדפדפן מקבל מפתח זמני מהשרת (`POST /v1/auth/temporary-api-key` עם `usage_type: transcribe_websocket`, תוקף 60 שניות, לפי שרת הדוגמה שלהם), ולא את המפתח הקבוע.
+
+### 1ב. תמלול קובץ אחרי השיחה (השוואה ומסלול גיבוי)
+```bash
+npm run transcribe -- recordings/call1.mp3 --terms "StudioFlow,Meta,WhatsApp"          # Soniox
+npm run transcribe -- recordings/call1.mp3 --provider both                              # גם Deepgram, אופציונלי
+```
+- הקובץ והתמלול נמחקים אצל Soniox אחרי העיבוד.
+- קובץ התמלול הזה משמש כייחוס להשוואה בשלב 3, אחרי שמתקנים אותו ידנית.
 
 ### 2. ייחוס ידני
-- מעתיקים את אחד התמלולים ל-`out/call1/reference.json`, ומתקנים ידנית את הטקסט ואת הדוברים.
+- מעתיקים את אחד התמלולים (מ-1ב או מהתמלול החי) ל-`out/call1/reference.json`, ומתקנים ידנית את הטקסט ואת הדוברים.
 - זה האמת שמולה משווים. מספיק לתקן את השורות, בלי לגעת בזמנים.
 
 ### 3. השוואת התמלולים
 ```bash
-npm run compare -- --ref out/call1/reference.json out/call1/transcript.soniox.json out/call1/transcript.deepgram.json --terms "StudioFlow,וואטסאפ"
+npm run compare -- --ref out/call1/reference.json out/call1/transcript.soniox-live.json out/call1/transcript.soniox.json --terms "StudioFlow,וואטסאפ"
 ```
 הדוח נשמר ב-`out/call1/compare-report.md`, ומודד את הדברים הבאים:
 - **WER:** אחוז שגיאות המילים.
@@ -101,18 +119,24 @@ npm run score -- --golden out/call1/golden.json out/call1/sim/<…>/dossier-v12.
 
 ## איך מחליטים
 
+הספים הם הצעה להתחלה, ואפשר לשנות אותם אחרי השיחה הראשונה.
+
 | שאלה | סף מוצע | אם לא עובר |
 |---|---|---|
-| מספרים וסכומים בתמלול | 95% ומעלה | עיבוד אחרי השיחה, עם תיקון ידני מהיר |
+| השהיה של תמלול חי (חציון) | עד 3 שניות | לבדוק חיבור ורשת. אם עדיין איטי, גיבוי: Fireflies |
+| מספרים וסכומים בתמלול החי | 95% ומעלה | להוסיף מונחים (`--terms`). אם לא עוזר, גיבוי: Fireflies |
+| שיוך דוברים | 95% ומעלה | לעבור לשני זרמים נפרדים |
 | רכיבים: recall | 85% ומעלה | לשפר את תיאורי "מתי מתאים" בקטלוג ולהריץ שוב |
-| מדיבור ועד מסך | פחות מ-60 שנ׳ | חלון קצר יותר, מאמץ נמוך יותר, או מודל מהיר יותר |
+| מדיבור ועד מסך (בסימולציה) | פחות מ-60 שנ׳ | חלון קצר יותר, מאמץ נמוך יותר, או מודל מהיר יותר |
 | עלות לשעת שיחה | זניחה מול מחיר אבחון (₪1,500 ומעלה) | — |
+
+**הגיבוי:** Fireflies נבדק רק אם אחד משלושת הספים הראשונים נכשל. הוא נכנס מאחורי אותו ממשק תמלול, ושאר המערכת לא משתנה.
 
 ## מבנה
 
 ```
 src/core/        קטלוג, חישוב הערכה, סכמת תיק, השוואת תמלולים, חלונות זמן
-src/transcribe/  Soniox, Deepgram, ופורמט תמלול אחיד
+src/transcribe/  Soniox (חי וקובץ), Deepgram (אופציונלי), ניקוי הזיות, ניסיון חוזר, ופורמט תמלול אחיד
 src/extract/     הפרומפט והקריאה ל-Claude (פלט מובנה, fallback, מדידת עלות)
 src/cli/         הפקודות שלמעלה
 test/            בדיקות (npm test). הקריאה ל-Claude נבדקת מול שרת מדומה
