@@ -34,6 +34,7 @@ function mockServer(onConfig?: (c: any, headers: any) => void, failWith?: { code
         ws.send(JSON.stringify({ tokens: [
           { text: "שלום", is_final: true, start_ms: 0, end_ms: 120, speaker: "1" },
           { text: " עולם", is_final: true, start_ms: 130, end_ms: 240, speaker: "1" },
+          { text: "<end>", is_final: true },
         ] }));
       }
     });

@@ -58,6 +58,7 @@ for (const p of providers) {
       join(outDir, `transcript.${p}.txt`),
       cleaned.segments.map((s) => `[${fmtMs(s.startMs)}] ${s.speaker === "consultant" ? "יועץ" : s.speaker === "client" ? "לקוח" : "?"}: ${s.text}`).join("\n") + "\n",
     );
+    console.log(cleaned.segments.map((s) => `[${fmtMs(s.startMs)}] ${s.speaker === "consultant" ? "יועץ" : s.speaker === "client" ? "לקוח" : "?"}: ${s.text}`).join("\n") || "(ריק: לא התקבל טקסט)");
     console.log(`✓ ${cleaned.segments.length} שורות, ${(r.processingMs / 1000).toFixed(1)} שניות עיבוד → ${outDir}/transcript.${p}.json`);
   } catch (e) {
     console.error(`✗ ${p}: ${(e as Error).message}`);

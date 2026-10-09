@@ -15,6 +15,7 @@ import { estimate } from "../core/estimate.js";
 import { range } from "../core/ltr.js";
 import { type CallMetrics, type Effort, Extractor } from "../extract/claude.js";
 import { LiveBuffer } from "../live/buffer.js";
+import { Captions } from "../live/captions.js";
 import { cleanSegments } from "../transcribe/clean.js";
 import { latencyStats, runLiveSession } from "../transcribe/soniox-live.js";
 import type { Segment, Speaker } from "../transcribe/types.js";
@@ -50,6 +51,7 @@ const outDir = values.out ?? join("out", name, "live-run");
 const extractor = new Extractor(DEMO_CATALOG, values.model, values.effort as Effort | undefined);
 
 const buffer = new LiveBuffer();
+const captions = new Captions();
 const allSegments: Segment[] = [];
 const rounds: { atMs: number; segments: number; metrics: CallMetrics; ok: boolean; hours: [number, number]; price: [number, number] }[] = [];
 let dossier: Dossier = emptyDossier();
@@ -83,6 +85,7 @@ async function tick(): Promise<void> {
     rounds.push({ atMs: at, segments: fresh.length, metrics, ok: next !== null, hours: [...e.hours], price: [...e.price] });
     await writeJson(join(outDir, `dossier-v${String(rounds.length).padStart(2, "0")}.json`), dossier);
 
+    captions.breakLine();
     console.log(`\n── ${fmtMs(at)} · ${fresh.length} שורות חדשות · Claude ${(metrics.latencyMs / 1000).toFixed(1)} שנ׳${next ? "" : ` ⚠ ${metrics.stopReason}, נשאר התיק הקודם`}`);
     for (const w of dossier.whispers.filter((x) => !prevWhispers.has(x.key))) console.log(`   לחישה [${w.kind}]: ${w.headline_he}`);
     if (e.lines.length) {
@@ -99,7 +102,10 @@ console.log(`▶ משדר ומריץ את Claude כל ${values.window} שניו�
 startedAt = Date.now();
 const timer = setInterval(() => void tick(), windowMs);
 
-const feed = (forced?: Speaker) => (tokens: Parameters<LiveBuffer["push"]>[0]) => buffer.push(tokens, forced);
+const feed = (forced?: Speaker) => (tokens: Parameters<LiveBuffer["push"]>[0]) => {
+  captions.write(forced ?? tokens[0]?.speaker ?? null, tokens);
+  buffer.push(tokens, forced);
+};
 
 try {
   const results = two

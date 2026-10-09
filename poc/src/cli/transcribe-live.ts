@@ -12,6 +12,7 @@ import { parseArgs } from "node:util";
 import { cleanTranscript } from "../transcribe/clean.js";
 import { type LiveResult, latencyStats, runLiveSession } from "../transcribe/soniox-live.js";
 import { assignSpeakers, groupWords, type Segment, type Speaker, type Transcript } from "../transcribe/types.js";
+import { Captions } from "../live/captions.js";
 import { fmtMs, writeJson, writeText } from "./io.js";
 
 const { values, positionals } = parseArgs({
@@ -51,15 +52,16 @@ function toSegments(r: LiveResult, forced?: Speaker): Segment[] {
   return assignSpeakers(grouped, values["consultant-speaker"]);
 }
 
-console.log(two ? "▶ שני זרמים במקביל…" : `▶ ${single}: משדר בקצב אמיתי…`);
+const captions = new Captions();
+console.log(two ? "▶ שני זרמים במקביל. מה שנשמע מופיע כאן תוך כדי:\n" : `▶ ${single}: משדר בקצב אמיתי. מה שנשמע מופיע כאן תוך כדי:\n`);
 let segments: Segment[];
 const stats: Record<string, ReturnType<typeof latencyStats> & { wallMs: number; audioMs: number }> = {};
 
 try {
   if (two) {
     const [c, k] = await Promise.all([
-      runLiveSession({ audioPath: values.client!, format, terms, diarization: false }),
-      runLiveSession({ audioPath: values.consultant!, format, terms, diarization: false }),
+      runLiveSession({ audioPath: values.client!, format, terms, diarization: false, onFinalTokens: (t) => captions.write("client", t) }),
+      runLiveSession({ audioPath: values.consultant!, format, terms, diarization: false, onFinalTokens: (t) => captions.write("consultant", t) }),
     ]);
     stats.client = { ...latencyStats(c), wallMs: c.wallMs, audioMs: c.audioMs };
     stats.consultant = { ...latencyStats(k), wallMs: k.wallMs, audioMs: k.audioMs };
@@ -67,7 +69,10 @@ try {
       .sort((a, b) => a.startMs - b.startMs)
       .map((s, i) => ({ ...s, seq: i + 1 }));
   } else {
-    const r = await runLiveSession({ audioPath: single!, format, terms, diarization: true });
+    const r = await runLiveSession({
+      audioPath: single!, format, terms, diarization: true,
+      onFinalTokens: (t) => captions.write(t[0]?.speaker ?? null, t),
+    });
     stats.single = { ...latencyStats(r), wallMs: r.wallMs, audioMs: r.audioMs };
     segments = toSegments(r);
   }
@@ -75,6 +80,8 @@ try {
   console.error(`✗ ${(e as Error).message}`);
   process.exit(1);
 }
+
+captions.breakLine();
 
 const transcript: Transcript = {
   provider: "soniox",
@@ -98,6 +105,9 @@ await writeText(
   join(outDir, "transcript.soniox-live.txt"),
   cleaned.segments.map((s) => `[${fmtMs(s.startMs)}] ${s.speaker === "consultant" ? "יועץ" : s.speaker === "client" ? "לקוח" : "?"}: ${s.text}`).join("\n") + "\n",
 );
+
+console.log(`\n── הטקסט המלא (נשמר גם ב-${outDir}/transcript.soniox-live.txt) ──`);
+console.log(cleaned.segments.map((s) => `[${fmtMs(s.startMs)}] ${s.speaker === "consultant" ? "יועץ" : s.speaker === "client" ? "לקוח" : "?"}: ${s.text}`).join("\n") || "(ריק: לא התקבל טקסט)");
 
 const sec = (ms: number | null) => (ms === null ? "—" : `${(ms / 1000).toFixed(2)} שנ׳`);
 console.log(`\n✓ ${cleaned.segments.length} שורות → ${outDir}/transcript.soniox-live.json\n`);

@@ -99,6 +99,7 @@ export async function runLiveSession(opts: LiveOptions): Promise<LiveResult> {
       const fresh: LiveToken[] = [];
       for (const t of res.tokens ?? []) {
         if (!t.text || !t.is_final) continue; // טוקנים לא סופיים משתנים, ולכן לא שומרים אותם
+        if (/^<[a-z_]+>$/i.test(t.text.trim())) continue; // סימנים מיוחדים של השרת, כמו <end>, אינם חלק מהדיבור
         firstTokenMs ??= now;
         const endMs = t.end_ms ?? null;
         const tok: LiveToken = {
