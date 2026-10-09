@@ -57,7 +57,7 @@ export function estimate(input: EstimateInput): Estimate {
         kind === "fixed" ? [c.fixedPrice!, c.fixedPrice!]
         : kind === "hourly" ? [hours[0] * rate0, hours[1] * rate0]
         : [0, 0];
-      return { key: c.key, nameHe: c.nameHe, hours: kind === "quote" || kind === "monthly" ? ([0, 0] as Range) : hours, rate: rate0, phase: s.phase ?? c.defaultPhase, kind, price, monthlyPrice: c.monthlyPrice ?? 0 };
+      return { key: c.key, nameHe: c.nameHe, hours: kind === "quote" ? ([0, 0] as Range) : hours, rate: rate0, phase: s.phase ?? c.defaultPhase, kind, price, monthlyPrice: c.monthlyPrice ?? 0 };
     })
     .filter((l) => input.phase === undefined || l.phase === input.phase);
 

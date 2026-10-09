@@ -35,7 +35,8 @@ const e = estimate({
 });
 const ils = (n: number) => `₪${n.toLocaleString("en-US")}`;
 for (const l of e.lines) {
-  const how = l.kind === "fixed" ? `₪${l.price[0].toLocaleString("en-US")} קבוע` : l.kind === "monthly" ? "ריטיינר חודשי" : l.kind === "quote" ? "לפי הצעה" : `${l.hours[0]}–${l.hours[1]} שעות`;
+  const hrs = `${l.hours[0]}–${l.hours[1]} שעות`;
+  const how = l.kind === "fixed" ? `₪${l.price[0].toLocaleString("en-US")} קבוע, ${hrs}` : l.kind === "monthly" ? `ריטיינר חודשי, הקמה ${hrs}` : l.kind === "quote" ? "לפי הצעה" : hrs;
   console.log(`  ${l.nameHe.padEnd(34)} ${how}  (שלב ${l.phase})`);
 }
 console.log(`\nתעריף: ${ils(e.hourlyRate)} לשעה`);

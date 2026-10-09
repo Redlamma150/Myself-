@@ -28,34 +28,44 @@ describe("parseCatalog", () => {
 describe("הקטלוג המדומה של מאמני כושר", () => {
   const catalog = parseCatalog(JSON.parse(readFileSync("catalog/fitness-mock.json", "utf8")));
 
-  it("נטען עם 14 רכיבים, והמחירים תואמים לקובץ המחירים", () => {
-    expect(catalog).toHaveLength(14);
-    const price = (k: string) => catalog.find((c) => c.key === k)!;
-    expect(price("meals_by_portion").fixedPrice).toBe(1500);
-    expect(price("register_api").fixedPrice).toBe(600);
-    expect(price("whatsapp_alerts").monthlyPrice).toBe(150);
-    expect(price("crm_automations").quote).toBe(true);
-    expect(price("studio_system").quote).toBe(true);
+  it("נטען עם 13 רכיבים, והמחירים תואמים לקובץ המחירים", () => {
+    expect(catalog).toHaveLength(13);
+    const get = (k: string) => catalog.find((c) => c.key === k);
+    expect(get("meals_by_portion")?.fixedPrice).toBe(1500);
+    expect(get("register_api")).toBeUndefined(); // הוסר
+    expect(get("whatsapp_business")?.fixedPrice).toBe(500); // חד-פעמי
+    expect(get("whatsapp_alerts")?.monthlyPrice).toBe(150);
+    expect(get("crm_automations")?.monthlyPrice).toBe(350);
+    expect(get("studio_system")?.monthlyPrice).toBe(350);
+    expect(catalog.every((c) => c.hours[1] > 0)).toBe(true); // לכל רכיב יש שעות
   });
 
-  it("הערכה: מחיר קבוע, ריטיינר חודשי והצעה נפרדים", () => {
+  it("הערכה: מחיר קבוע וריטיינרים חודשיים נפרדים, והשעות נספרות", () => {
     const e = estimate({
       catalog,
       hourlyRate: 999, // לא משפיע על מחיר קבוע
       components: ["meals_by_portion", "dynamic_forms", "refer_a_friend", "whatsapp_alerts", "crm_automations"].map((key) => ({ key })),
     });
     expect(e.price).toEqual([1500 + 1500 + 800, 1500 + 1500 + 800]);
-    expect(e.monthly).toBe(150);
-    expect(e.quoteItems.map((q) => q.key)).toEqual(["crm_automations"]);
-    expect(e.lines.map((l) => l.kind)).toEqual(["fixed", "fixed", "fixed", "monthly", "quote"]);
+    expect(e.monthly).toBe(150 + 350);
+    expect(e.quoteItems).toEqual([]);
+    expect(e.lines.map((l) => l.kind)).toEqual(["fixed", "fixed", "fixed", "monthly", "monthly"]);
+    expect(e.hours).toEqual([6 + 6 + 4 + 2 + 8, 10 + 10 + 6 + 4 + 20]);
     expect(e.weeks[0]).toBeGreaterThan(0);
+  });
+
+  it("רכיב 'לפי הצעה' מופיע ברשימה נפרדת ולא בסכום", () => {
+    const c = parseCatalog({ components: [{ ...base, fixedPrice: 1000 }, { ...base, key: "b", nameHe: "ב", quote: true, hours: [0, 0] }] });
+    const e = estimate({ catalog: c, components: [{ key: "a" }, { key: "b" }] });
+    expect(e.price).toEqual([1000, 1000]);
+    expect(e.quoteItems).toEqual([{ key: "b", nameHe: "ב" }]);
   });
 
   it("הפרומפט מציג הערות וסוגי תמחור, ובלי כלל על רכיבי 'תמיד' כשאין כאלה", () => {
     const p = systemPrompt(catalog);
     expect(p).toContain("whatsapp_alerts");
     expect(p).toContain("monthly retainer");
-    expect(p).toContain("priced by quote");
+    expect(p).not.toContain("priced by quote"); // אין כרגע רכיבי הצעה בקטלוג הזה
     expect(p).not.toContain("always included");
   });
 
